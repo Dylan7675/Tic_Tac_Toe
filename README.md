@@ -4,7 +4,7 @@ This is my first attempt at a major solo project. It may be missing some feature
 At this time I don't specifically plan on going back to improve this project.
 
 
-#Some background on this project
+## Some background on this project
 
 
 This Tic Tac Toe game was my first major solo project after studying OOP design. OOP seemed like such a hard concept
