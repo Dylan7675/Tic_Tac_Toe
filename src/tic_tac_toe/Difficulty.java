@@ -5,10 +5,7 @@
  */
 package tic_tac_toe;
 
-/**
- *
- * @author dylan laptop
- */
+
 public class Difficulty {
        
     public static boolean beginner = true;

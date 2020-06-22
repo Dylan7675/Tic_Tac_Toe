@@ -7,10 +7,6 @@ package tic_tac_toe;
 
 import userInterface.Player;
 
-/**
- *
- * @author Dylan
- */
 public class Game {
 
     //win check bools
@@ -96,11 +92,19 @@ public class Game {
         else return(diagWin=false);
     }
     
-    //sets stalemate to true if stalemate happens
     public static boolean setStalemate(){
-        if(staleCount == 9){
+    	int openSpots = 0;
+    	
+    	for(int i=0; i < 3; i++){
+    		for(int j=0; j < 3; j++){
+    			if(Player.buttonGrid[i][j].getText().equals("")) {
+    		        openSpots++;
+    			}
+    		}
+    	}
+        if(openSpots == 0){	
             return(stalemate=true);
-        }
+        }    
         else return(stalemate=false);
     }
     
@@ -111,5 +115,14 @@ public class Game {
         }
 
         return gameOver;
+    }
+    
+    public static void resetWinStatus()
+    {
+    	vertWin = false;
+    	horzWin = false;
+    	diagWin = false;
+    	gameOver = false;
+    	
     }
 }

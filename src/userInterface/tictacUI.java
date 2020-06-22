@@ -13,6 +13,8 @@ import static tic_tac_toe.TicTacClient.playerScore;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
@@ -50,8 +52,6 @@ public class tictacUI extends JFrame{
     
     //objects
     private Player playGame;
-    
-    
     
     public tictacUI()
     {
@@ -92,6 +92,7 @@ public class tictacUI extends JFrame{
         ImageIcon image = new ImageIcon(imageUrl);
         JLabel label = new JLabel(image);
         startPanel.add(label, BorderLayout.CENTER);
+        this.setIconImage(image.getImage());
 
         //setting up the menuBar
         menuBar = new JMenuBar();
@@ -105,22 +106,27 @@ public class tictacUI extends JFrame{
         
         // option menu
         reset = new JMenuItem("Reset");
+        reset.setMnemonic('R');
         reset.addActionListener(new resetListener());
         exit = new JMenuItem("Exit");
+        exit.setMnemonic('X');
         exit.addActionListener(new ExitListener());
         optionMenu.add(reset);
         optionMenu.add(exit);
         
         //Difficulty menu
         beginner = new JMenuItem("Beginner");
+        beginner.setMnemonic('B');
         beginner.addActionListener(new beginnerButtonListener());
-        intermediate = new JMenuItem("intermediate");
+        intermediate = new JMenuItem("Intermediate");
+        intermediate.setMnemonic('I');
         intermediate.addActionListener(new intermediateButtonListener());
         hard = new JMenuItem("Hard");
+        hard.setMnemonic('H');
         hard.addActionListener(new hardButtonListener());
         difficultyMenu.add(beginner);
         difficultyMenu.add(intermediate);
-        //difficultyMenu.add(hard);
+        difficultyMenu.add(hard);
         
         //setup XO option panel
         xoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,90,0));
@@ -148,7 +154,7 @@ public class tictacUI extends JFrame{
         
      }
     
-    //sets up playerPanel and instanciates playerArray
+    //sets up playerPanel and instantiates playerArray
     private void setupPlayerPanel()
     {
         Font playFont = new Font("Seriff",Font.PLAIN,12);
@@ -217,7 +223,6 @@ public class tictacUI extends JFrame{
             compLetter="X";
             o.setEnabled(false);
             x.setEnabled(false);
-            //playerPanel.setVisible(true);
         }
     
     }
@@ -257,7 +262,7 @@ public class tictacUI extends JFrame{
             Difficulty.beginner = false;
             Difficulty.intermediate = true;
             Difficulty.hard = false;
-            JOptionPane.showMessageDialog(null, "intermediate Mode has Been Selected");
+            JOptionPane.showMessageDialog(null, "Intermediate Mode has Been Selected");
         }
     }
     

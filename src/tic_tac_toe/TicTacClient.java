@@ -12,7 +12,6 @@ import static java.awt.Frame.TEXT_CURSOR;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import static java.time.Clock.system;
-import static tic_tac_toe.Game.staleCount;
 
 import java.util.Random;
 import javax.swing.BorderFactory;
@@ -21,15 +20,10 @@ import javax.swing.JOptionPane;
 
 import tic_tac_toe.Difficulty;
 import tic_tac_toe.Game;
-import userInterface.MyThread;
 import userInterface.Player;
 import static userInterface.Player.getGrid;
 import userInterface.tictacUI;
-import userInterface.MyThread;
-/**
- *
- * @author dylan laptop
- */
+
 public class TicTacClient 
 {
    //declares
@@ -42,18 +36,30 @@ public class TicTacClient
    public static int compScore = 0;
    public static int playedCount = 1;
    
+   
    public TicTacClient(Player inPlayer,tictacUI inParent)
    {
       //sets parent to tictacUI class and player to Player class
        parent = inParent;
        player = inPlayer;
    }
+   
+   static class Move
+   {
+	   int row, col;
+   }
 
-public static boolean checkForWin()
+public static void setWinStatus()
 {
-    Game.setVertWin();
+	Game.setVertWin();
     Game.setHorzWin();
     Game.setDiagWin();
+}
+   
+public static boolean checkForWin()
+{
+    setWinStatus();
+	
     if(Game.isGameOver()==true){
         if(currentPlayer == 0){   
             JOptionPane.showMessageDialog(parent,"You won the game!");
@@ -69,9 +75,7 @@ public static boolean checkForWin()
 
 public static void endGame()
 {
-    //score tracker  
-    System.out.println(staleCount);
-    if(staleCount != 10){
+    if(Game.setStalemate() != true){
         if(currentPlayer == 0){
             playerScore += 1;
         }
@@ -95,327 +99,217 @@ public static void reset()
         }
     }
     
-    currentPlayer = 0;
-    Game.vertWin = false;
-    Game.horzWin = false;
-    Game.diagWin = false;
-    Game.gameOver = false;
-    Game.staleCount = 0;
+    Game.resetWinStatus();
+    Game.stalemate = false;
     Game.turnCount = 1;
     playedCount = 1;
     
 }
 
+private static Move findBestMove()
+{ 
+    int bestScore = -1000;
+    Move bestMove = new Move();
+    bestMove.row = 0;
+    bestMove.col = 0;
+    
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+        	if (getGrid()[i][j].getText().equals(""))
+        	{
+        		getGrid()[i][j].setText(tictacUI.compLetter);        		
+        		int score = minimax(0, false);
+        		getGrid()[i][j].setText("");
+        		
+        		if (score > bestScore)
+        		{
+        			bestScore = score;
+        			bestMove.row = i;
+        			bestMove.col = j;
+        		}
+        	}
+        }
+    }
+    return bestMove ;
+}
+
+private static int minimax(int depth, Boolean isMax)
+{
+	currentPlayer = (isMax) ? 0 : 1;
+	setWinStatus();
+	
+	if (Game.isGameOver() == true && currentPlayer == 1)
+	{
+		   Game.resetWinStatus();
+	       return (10);
+	}
+	
+	if (Game.isGameOver() == true && currentPlayer == 0)
+   {
+	   Game.resetWinStatus();
+       return (-10);
+   }
+   
+   if(Game.setStalemate() == true)
+   {
+	  Game.resetWinStatus();
+      return (0);
+   }
+   
+   if (isMax)
+   {
+	   int bestScore = -1000;
+	   
+	   for (int i = 0; i < 3; i++)
+       {
+           for (int j = 0; j < 3; j++)
+           {        	   
+               if (getGrid()[i][j].getText().equals(""))
+               {
+            	   getGrid()[i][j].setText(tictacUI.compLetter);
+                   int score = minimax(depth + 1, false);
+                   getGrid()[i][j].setText("");
+                   bestScore = Math.max(score, bestScore);
+               }
+           }
+       }
+       return bestScore;
+   }
+   
+   else
+   {
+	   int bestScore = 1000;
+	   
+	   for (int i = 0; i < 3; i++)
+       {
+           for (int j = 0; j < 3; j++)
+           {
+               if (getGrid()[i][j].getText().equals(""))
+               {
+            	   getGrid()[i][j].setText(tictacUI.playerLetter);
+            	   int score = minimax(depth + 1, true);
+            	   getGrid()[i][j].setText("");
+            	   bestScore = Math.min(score, bestScore);
+               }
+           }
+       } 
+       return bestScore;
+   }
+}
+
 //Computer move selection
+	
 public static void computerPick()
 {
 	
-	
 	Random random = new Random();
+	
     if(Difficulty.hard == true){
-        currentPlayer = 1;
+    	currentPlayer = 1;
+    	Move optimalMove = findBestMove();
+    	currentPlayer = 1;
+    	getGrid()[optimalMove.row][optimalMove.col].setText(tictacUI.compLetter);
+        getGrid()[optimalMove.row][optimalMove.col].setForeground(Color.red);
+        checkForWin();
+        stalemateEnd();
         
-   
-        if((Game.turnCount == 1 && playedCount == 1)&&
-            (getGrid()[0][0].getText().equals(tictacUI.playerLetter)||
-            getGrid()[0][2].getText().equals(tictacUI.playerLetter)||
-            getGrid()[2][0].getText().equals(tictacUI.playerLetter)||
-            getGrid()[2][2].getText().equals(tictacUI.playerLetter)))
-        {
-            getGrid()[1][1].setText(tictacUI.compLetter);
-            playedCount += 1;
-        }
-        
-        if((Game.turnCount == 1&& playedCount == 1)&& 
-            (getGrid()[0][1].getText().equals(tictacUI.playerLetter)||
-            getGrid()[1][0].getText().equals(tictacUI.playerLetter)||
-            getGrid()[1][2].getText().equals(tictacUI.playerLetter)||
-            getGrid()[2][1].getText().equals(tictacUI.playerLetter)))
-        {
-            if(getGrid()[0][1].getText().equals(tictacUI.playerLetter)){
-                getGrid()[2][1].setText(tictacUI.compLetter);
-                playedCount+=1;
-            }
-            if(getGrid()[1][0].getText().equals(tictacUI.playerLetter)){
-                getGrid()[1][2].setText(tictacUI.compLetter);
-                playedCount +=1 ;
-            }
-            
-            if(getGrid()[1][2].getText().equals(tictacUI.playerLetter)){
-                getGrid()[1][0].setText(tictacUI.compLetter);
-                playedCount+=1;
-            }
-           
-            if(getGrid()[2][1].getText().equals(tictacUI.playerLetter)){
-                getGrid()[0][1].setText(tictacUI.compLetter);
-                playedCount +=1;
-            }
-        }
-        
-        // pressure to either play [0][0] or [2][2]
-        if((Game.turnCount == 1&& playedCount == 1) && 
-          getGrid()[1][1].getText().equals(tictacUI.playerLetter))
-        {
-            getGrid()[0][2].setText(tictacUI.compLetter);
-            playedCount += 1;
-        }
-        
-        
-        
-        //edge decisions
-        if((Game.turnCount == 2&& playedCount == 2)&&
-          (getGrid()[0][1].getText().equals(tictacUI.playerLetter)||
-          getGrid()[1][0].getText().equals(tictacUI.playerLetter)||
-          getGrid()[1][2].getText().equals(tictacUI.playerLetter)||
-          getGrid()[2][1].getText().equals(tictacUI.playerLetter)))
-        {
-            if(getGrid()[0][1].getText().equals(tictacUI.playerLetter)&&getGrid()[0][2].getText().equals(tictacUI.playerLetter)){
-                    getGrid()[0][0].setText(tictacUI.compLetter);
-                    playedCount +=1;}
-            if(getGrid()[0][1].getText().equals(tictacUI.playerLetter)&&getGrid()[0][0].getText().equals(tictacUI.playerLetter)){
-                    getGrid()[0][2].setText(tictacUI.compLetter);
-                    playedCount +=1;}
-            if(getGrid()[1][0].getText().equals(tictacUI.playerLetter)&&getGrid()[2][0].getText().equals(tictacUI.playerLetter)){
-                    getGrid()[0][0].setText(tictacUI.compLetter);
-                    playedCount +=1;}
-            if(getGrid()[1][0].getText().equals(tictacUI.playerLetter)&&getGrid()[0][0].getText().equals(tictacUI.playerLetter)){
-                    getGrid()[2][0].setText(tictacUI.compLetter);
-                    playedCount +=1;}
-            if(getGrid()[1][2].getText().equals(tictacUI.playerLetter)&&getGrid()[2][2].getText().equals(tictacUI.playerLetter)){
-                    getGrid()[0][2].setText(tictacUI.compLetter);
-                    playedCount +=1;}
-            if(getGrid()[1][2].getText().equals(tictacUI.playerLetter)&&getGrid()[0][2].getText().equals(tictacUI.playerLetter)){
-                    getGrid()[2][2].setText(tictacUI.compLetter);
-                    playedCount +=1;}
-            if(getGrid()[2][1].getText().equals(tictacUI.playerLetter)&&getGrid()[2][2].getText().equals(tictacUI.playerLetter)){
-                    getGrid()[2][0].setText(tictacUI.compLetter);
-                    playedCount +=1;}
-            if(getGrid()[2][1].getText().equals(tictacUI.playerLetter)&&getGrid()[2][0].getText().equals(tictacUI.playerLetter)){
-                    getGrid()[2][2].setText(tictacUI.compLetter);
-                    playedCount +=1;}
-                    
-        }
-        
-        //choosing edge between two of players selected corners
-        if((Game.turnCount == 2&& playedCount ==2)&&
-        ((getGrid()[0][0].getText().equals(tictacUI.playerLetter)&&(getGrid()[0][2].getText().equals(tictacUI.playerLetter))||getGrid()[2][0].getText().equals(tictacUI.playerLetter))||
-        (getGrid()[0][2].getText().equals(tictacUI.playerLetter)&&(getGrid()[0][0].getText().equals(tictacUI.playerLetter))||getGrid()[2][2].getText().equals(tictacUI.playerLetter))||
-        (getGrid()[2][0].getText().equals(tictacUI.playerLetter)&&(getGrid()[0][0].getText().equals(tictacUI.playerLetter))||getGrid()[2][2].getText().equals(tictacUI.playerLetter))||
-        (getGrid()[2][2].getText().equals(tictacUI.playerLetter)&&(getGrid()[2][0].getText().equals(tictacUI.playerLetter))||getGrid()[0][2].getText().equals(tictacUI.playerLetter))))
-        {
-            if((getGrid()[0][0].getText().equals(tictacUI.playerLetter)&&(getGrid()[0][2].getText().equals(tictacUI.playerLetter))))
-            {
-                getGrid()[0][1].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-            
-            if((getGrid()[0][0].getText().equals(tictacUI.playerLetter)&&(getGrid()[2][0].getText().equals(tictacUI.playerLetter))))
-            {
-                getGrid()[1][0].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-            
-            if((getGrid()[2][0].getText().equals(tictacUI.playerLetter)&&(getGrid()[2][2].getText().equals(tictacUI.playerLetter))))
-            {
-                getGrid()[2][1].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-            
-            if((getGrid()[0][2].getText().equals(tictacUI.playerLetter)&&(getGrid()[2][2].getText().equals(tictacUI.playerLetter))))
-            {
-                getGrid()[1][2].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-                
-            
-        }
-        
-        //choosing a corner if [0][0] was start play
-        if((Game.turnCount == 2 && playedCount == 2)&&
-          (getGrid()[0][0].getText().equals(tictacUI.playerLetter)||
-           getGrid()[2][2].getText().equals(tictacUI.playerLetter)))
-        {
-            if(getGrid()[0][0].getText().equals(tictacUI.playerLetter)){
-               getGrid()[2][2].setText(tictacUI.compLetter);
-               playedCount +=1;
-            }
-            
-            if(getGrid()[2][2].getText().equals(tictacUI.playerLetter)){
-               getGrid()[0][0].setText(tictacUI.compLetter);
-               playedCount+=1;
-            }
-        
-        }
-       // handle [1][1] move and [2][0] move in 2nd turn
-      
-       //turn 3 if edge then corner pick
-            if((Game.turnCount == 3 && playedCount == 3)&&(getGrid()[0][1].getText().equals(tictacUI.playerLetter))&&(getGrid()[1][1].getText().equals(tictacUI.playerLetter))
-            &&(getGrid()[0][0].getText().equals(tictacUI.playerLetter)))
-            {
-                getGrid()[2][2].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-        //top
-            if((Game.turnCount == 3 && playedCount == 3)&&(getGrid()[0][1].getText().equals(tictacUI.playerLetter))&&(getGrid()[1][1].getText().equals(tictacUI.playerLetter))
-            &&(getGrid()[0][2].getText().equals(tictacUI.playerLetter)))
-            {
-                getGrid()[2][0].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-        
-        //left
-            if((Game.turnCount == 3 && playedCount == 3)&&(getGrid()[1][0].getText().equals(tictacUI.playerLetter))&&(getGrid()[1][1].getText().equals(tictacUI.playerLetter))
-            &&(getGrid()[0][0].getText().equals(tictacUI.playerLetter)))
-            {
-                getGrid()[2][2].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-            
-            if((Game.turnCount == 3 && playedCount == 3)&&(getGrid()[1][0].getText().equals(tictacUI.playerLetter))&&(getGrid()[1][1].getText().equals(tictacUI.playerLetter))
-            &&(getGrid()[2][2].getText().equals(tictacUI.playerLetter)))
-            {
-                getGrid()[0][2].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-        //right
-            if((Game.turnCount == 3 && playedCount == 3)&&(getGrid()[1][2].getText().equals(tictacUI.playerLetter))&&(getGrid()[1][1].getText().equals(tictacUI.playerLetter))
-            &&(getGrid()[0][2].getText().equals(tictacUI.playerLetter)))
-            {
-                getGrid()[2][0].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-            
-            if((Game.turnCount == 3 && playedCount == 3)&&(getGrid()[1][2].getText().equals(tictacUI.playerLetter))&&(getGrid()[1][1].getText().equals(tictacUI.playerLetter))
-            &&(getGrid()[2][2].getText().equals(tictacUI.playerLetter)))
-            {
-                getGrid()[0][0].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-        //bottom
-            if((Game.turnCount == 3 && playedCount == 3)&&(getGrid()[2][1].getText().equals(tictacUI.playerLetter))&&(getGrid()[1][1].getText().equals(tictacUI.playerLetter))
-            &&(getGrid()[2][0].getText().equals(tictacUI.playerLetter)))
-            {
-                getGrid()[0][2].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-            
-            if((Game.turnCount == 3 && playedCount == 3)&&(getGrid()[2][1].getText().equals(tictacUI.playerLetter))&&(getGrid()[1][1].getText().equals(tictacUI.playerLetter))
-            &&(getGrid()[2][2].getText().equals(tictacUI.playerLetter)))
-            {
-                getGrid()[0][0].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-        
-
-        //Play3 in according to starting with a corner
-       if((Game.turnCount == 3&& playedCount ==3)&&(getGrid()[0][0].getText().equals(tictacUI.playerLetter))
-         &&(getGrid()[2][0].getText().equals(tictacUI.playerLetter)))
-        {
-            if((getGrid()[1][2].getText().equals(tictacUI.playerLetter)))
-            {
-                getGrid()[2][2].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-            else{
-                getGrid()[1][2].setText(tictacUI.compLetter);
-                playedCount+=1;
-                checkForWin();
-            }
-        }
-           
-        if((Game.turnCount == 3&& playedCount == 3)&&(getGrid()[0][0].getText().equals(tictacUI.playerLetter))
-         &&(getGrid()[0][2].getText().equals(tictacUI.playerLetter)))
-        {
-            if((getGrid()[2][1].getText().equals(tictacUI.playerLetter)))
-            {
-                getGrid()[2][2].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-            else{
-                getGrid()[2][1].setText(tictacUI.compLetter);
-                playedCount+=1;
-                checkForWin();
-            }
-        }
-        
-        if((Game.turnCount == 3&& playedCount == 3)&&(getGrid()[0][2].getText().equals(tictacUI.playerLetter))
-         &&(getGrid()[2][2].getText().equals(tictacUI.playerLetter)))
-        {
-            if((getGrid()[1][0].getText().equals(tictacUI.playerLetter)))
-            {
-                getGrid()[0][0].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-            else{
-                getGrid()[1][0].setText(tictacUI.compLetter);
-                playedCount+=1;
-                checkForWin();
-            }
-        }
-        
-        if((Game.turnCount == 3&& playedCount == 3)&&(getGrid()[2][0].getText().equals(tictacUI.playerLetter))
-         &&(getGrid()[2][2].getText().equals(tictacUI.playerLetter)))
-        {
-            if((getGrid()[0][1].getText().equals(tictacUI.playerLetter)))
-            {
-                getGrid()[0][0].setText(tictacUI.compLetter);
-                playedCount += 1;
-            }
-            else{
-                getGrid()[0][1].setText(tictacUI.compLetter);
-                playedCount+=1;
-                checkForWin();
-            }
-        }
-             
-       // player in defense of losing on turn 3 from starting [1][1]
-       if((Game.turnCount == 3&& playedCount == 3)&&(getGrid()[1][1].getText().equals(tictacUI.playerLetter)
-          &&getGrid()[2][2].getText().equals(tictacUI.playerLetter)))
-       {
-           if(getGrid()[0][1].getText().isEmpty())
-           {
-               getGrid()[0][1].setText(tictacUI.compLetter);
-               playedCount+=1;
-               checkForWin();
-           }
-           else{
-               getGrid()[2][1].setText(tictacUI.compLetter);
-               playedCount += 1;
-           }
-       }
-       
-       if((Game.turnCount == 3&& playedCount == 3)&&(getGrid()[1][1].getText().equals(tictacUI.playerLetter)
-          &&getGrid()[0][0].getText().equals(tictacUI.playerLetter)))
-       {
-           if(getGrid()[1][2].getText().isEmpty())
-           {
-               getGrid()[1][2].setText(tictacUI.compLetter);
-               playedCount+=1;
-               checkForWin();
-           }
-           else{
-               getGrid()[1][0].setText(tictacUI.compLetter);
-               playedCount += 1;
-           }
-       }
-        
-       //turn 4, if empty take winning space, random selection should finish the stalemate 
-       //if first move was center
-       
-       
-        Game.turnCount += 1;
-        System.out.println("turn count = " + Game.turnCount);
     }
-    
-    
     
     if(Difficulty.intermediate == true){
     rowClick = random.nextInt(Player.getRows());
     colClick = random.nextInt(Player.getCols());
     currentPlayer = 1;
-     
+    
+    if(getGrid()[1][1].getText().isEmpty())
+    {
+    	getGrid()[1][1].setText(tictacUI.compLetter);
+        getGrid()[1][1].setForeground(Color.red);
+        checkForWin();
+        stalemateEnd();
+        return;
+    }
+    
+    //Blocks middle edge selection between 2 corners
+    for(int i=0; i<=2; i+=2)
+    {
+    	for(int j=2; j>=0; j-=2)
+    	{
+    		if(i != j)
+    		{
+    			if(getGrid()[i][i].getText() != ""
+    					&& getGrid()[i][i].getText() == getGrid()[j][i].getText()
+    					&& getGrid()[1][i].getText() == "")
+    			{
+    				getGrid()[1][i].setText(tictacUI.compLetter);
+    		        getGrid()[1][i].setForeground(Color.red);
+    		        checkForWin();
+    		        stalemateEnd();
+    		        return;
+    			}
+    			
+    			else if(getGrid()[i][i].getText() != ""
+    					&& getGrid()[i][i].getText() == getGrid()[i][j].getText()
+    					&& getGrid()[i][1].getText() == "")
+    			{
+    				getGrid()[i][1].setText(tictacUI.compLetter);
+    		        getGrid()[i][1].setForeground(Color.red);
+    		        checkForWin();
+    		        stalemateEnd();
+    		        return;
+    			}
+    		}
+    	}
+    }
+    
+    //Blocks corner win selection
+    for (int i=0; i<3; i++)
+    {
+    	if(getGrid()[i][2].getText() == ""
+    	   && getGrid()[i][0].getText() == getGrid()[i][1].getText()
+    	   && getGrid()[i][0].getText() != "")
+    	{
+    		getGrid()[i][2].setText(tictacUI.compLetter);
+	        getGrid()[i][2].setForeground(Color.red);
+	        checkForWin();
+	        stalemateEnd();
+	        return;
+    	}
+    	else if(getGrid()[i][0].getText() == ""
+    	        && getGrid()[i][1].getText() == getGrid()[i][2].getText()
+    	    	&& getGrid()[i][1].getText() != "")
+    	    {
+    	            getGrid()[i][0].setText(tictacUI.compLetter);
+    		        getGrid()[i][0].setForeground(Color.red);
+    		        checkForWin();
+    		        stalemateEnd();
+    		        return;
+    	    }
+    	else if(getGrid()[2][i].getText() == ""
+    	        && getGrid()[0][i].getText() == getGrid()[1][i].getText()
+    	    	&& getGrid()[0][i].getText() != "")
+    	    {
+    	            getGrid()[2][i].setText(tictacUI.compLetter);
+    		        getGrid()[2][i].setForeground(Color.red);
+    		        checkForWin();
+    		        stalemateEnd();
+    		        return;
+    	    }
+    	else if(getGrid()[0][i].getText() == ""
+    	        && getGrid()[1][i].getText() == getGrid()[2][i].getText()
+    	    	&& getGrid()[1][i].getText() != "")
+    	    {
+    	            getGrid()[0][i].setText(tictacUI.compLetter);
+    		        getGrid()[0][i].setForeground(Color.red);
+    		        checkForWin();
+    		        stalemateEnd();
+    		        return;
+    	    }
+    }
+    
      // choosing corners
-     if(getGrid()[0][0].getText().isEmpty()||
+    if(getGrid()[0][0].getText().isEmpty()||
         getGrid()[0][2].getText().isEmpty()||
         getGrid()[1][1].getText().isEmpty()||
         getGrid()[2][0].getText().isEmpty()||
@@ -438,16 +332,8 @@ public static void computerPick()
                {
                 getGrid()[rowClick][colClick].setText(tictacUI.compLetter);
                 getGrid()[rowClick][colClick].setForeground(Color.red);
-                Game.staleCount +=1;
-                System.out.println(staleCount);
                 checkForWin();
-               
-                if(Game.staleCount >= 9)
-                {
-                    staleCount += 1; // can still win on last move must, add to be able to compare if there is a win or stalemate
-                    JOptionPane.showMessageDialog(parent,"There has been a Stalemate!\n Game Over!");
-                    endGame();
-                } 
+                stalemateEnd(); 
             }
          }
         else
@@ -467,16 +353,8 @@ public static void computerPick()
     {
         getGrid()[rowClick][colClick].setText(tictacUI.compLetter);
         getGrid()[rowClick][colClick].setForeground(Color.red);
-        Game.staleCount +=1;
-        System.out.println(staleCount);
         checkForWin();
-        
-        if(Game.staleCount >= 9)
-        {
-            staleCount += 1; // can still win on last move must, add to be able to compare if there is a win or stalemate
-            JOptionPane.showMessageDialog(parent,"There has been a Stalemate!\n Game Over!");
-            endGame();
-        }          
+        stalemateEnd();          
     }
       
   
@@ -497,18 +375,20 @@ public static void computerPick()
         currentPlayer = 1;
         getGrid()[rowClick][colClick].setText(tictacUI.compLetter);
         getGrid()[rowClick][colClick].setForeground(Color.red);
-        Game.staleCount +=1;
-        System.out.println(staleCount);
         checkForWin();
-        
-        if(Game.staleCount >= 9)
-        {
-            staleCount += 1; // can still win on last move must, add to be able to compare if there is a win or stalemate
-            JOptionPane.showMessageDialog(parent,"There has been a Stalemate!\n Game Over!");
-            endGame();
-        }          
+        stalemateEnd();          
     }
 }
   
-}  
+} 
+
+public static void stalemateEnd()
+{
+	if(Game.setStalemate() == true)
+    {
+        JOptionPane.showMessageDialog(parent,"There has been a Stalemate!\n Game Over!");
+        endGame();
+    } 	
+}
+
 }

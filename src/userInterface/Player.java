@@ -15,6 +15,7 @@ import javax.swing.JOptionPane;
 
 import tic_tac_toe.Game;
 import tic_tac_toe.TicTacClient;
+import userInterface.tictacUI;
 
 /**
  *
@@ -98,27 +99,14 @@ public class Player {
                 TicTacClient.currentPlayer = 0;
                 getGrid()[rowClick][colClick].setText(tictacUI.playerLetter);
                 getGrid()[rowClick][colClick].setForeground(Color.blue);
-                
-             
-                
-                Game.staleCount +=1;
-                System.out.println(Game.staleCount);
-                
-                
+                getGrid()[rowClick][colClick].revalidate();
+                                
                 TicTacClient.checkForWin();
                 
                 if(TicTacClient.checkForWin() == false){
                     
-                    if(Game.staleCount >= 9)
-                    {
-                        Game.staleCount += 1; // can still win on last move must, add to be able to compare if there is a win or stalemate
-                        JOptionPane.showMessageDialog(parent,"There has been a Stalemate!\n Game Over!");
-                        TicTacClient.endGame();
-                    } 
-                    
-                    
+                    TicTacClient.stalemateEnd(); 
                     TicTacClient.computerPick();
-                    
                     
                 	}
                 
